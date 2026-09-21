@@ -13,7 +13,7 @@ Si el archivo no esta, se muestra un recuadro amarillo con el
 nombre de la persona. No se rompe nada.
 
   1. moria       -> Moria Casan          [LISTO: moria.gif]
-  2. fort        -> Ricardo Fort         [falta]
+  2. fort        -> Ricardo Fort         [LISTO: fort.gif]
   3. pachano     -> Anibal Pachano       [LISTO: pachano.gif]
   4. mirtha      -> Mirtha Legrand       [LISTO: mirtha.jpg]
   5. susana      -> Susana Gimenez       [LISTO: susana.jpg]
