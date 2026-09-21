@@ -1,0 +1,29 @@
+FOTOS / GIFS DE LAS PREGUNTAS
+=============================
+
+Tira el archivo en esta carpeta con el nombre de la lista.
+NO IMPORTA LA EXTENSION: la pagina prueba sola .gif, .jpg,
+.jpeg, .png, .webp y .avif, en ese orden.
+
+El recuadro toma la proporcion de cada imagen, asi que entra
+completa y sin recortes ni franjas: horizontal, cuadrada o
+vertical. Los memes verticales con texto se leen igual.
+
+Si el archivo no esta, se muestra un recuadro amarillo con el
+nombre de la persona. No se rompe nada.
+
+  1. moria       -> Moria Casan          [LISTO: moria.gif]
+  2. fort        -> Ricardo Fort         [falta]
+  3. pachano     -> Anibal Pachano       [LISTO: pachano.gif]
+  4. mirtha      -> Mirtha Legrand       [LISTO: mirtha.jpg]
+  5. susana      -> Susana Gimenez       [LISTO: susana.jpg]
+  6. wanda       -> Wanda Nara           [LISTO: wanda.jpg]
+  7. tinelli     -> Marcelo Tinelli      [LISTO: tinelli.jpg]
+  8. charlotte   -> Charlotte Caniggia   [LISTO: charlotte.gif]
+  9. maradona    -> Diego Maradona       [LISTO: maradona.jpg]
+ 10. rial        -> Jorge Rial           [LISTO: rial.jpg]
+
+Consejo: busca el meme o el GIF de cada uno (la captura con la
+frase) en vez de una foto de prensa. Queda mucho mas gracioso.
+
+Ya incluida: gato-flores.jpg (pantalla final, nombre fijo)

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFF6DC">
+<title>Tus Flores Amarillas</title>
+<meta name="description" content="Un juego de primavera sobre la farándula argentina, con flores amarillas al final.">
+<style>
+  :root{
+    --cream:#FFF6DC;
+    --cream-2:#FFFDF6;
+    --sun:#F7C51C;
+    --sun-soft:#FFEFB8;
+    --sun-light:#FFE9A0;
+    --leaf:#5F9E4A;
+    --leaf-dark:#3F6E32;
+    --ink:#3B3122;
+    --ink-soft:#7A6B52;
+    --rose:#E0606E;
+    --ok:#4F9A54;
+    --bad:#D2604F;
+    --radius:20px;
+    --shadow:0 10px 28px rgba(96,74,20,.14);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(120% 70% at 50% 0%, #FFFDF4 0%, var(--cream) 46%, #FBE9BC 100%)
+      fixed;
+    min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
+    line-height:1.5;
+  }
+
+  /* ---------- petalos flotantes ---------- */
+  .petalos{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .petalo{
+    position:absolute;top:-8vh;width:14px;height:14px;
+    background:radial-gradient(circle at 30% 30%, #FFE477, var(--sun));
+    border-radius:60% 40% 55% 45% / 55% 60% 40% 45%;
+    opacity:.75;
+    animation:caer linear infinite;
+  }
+  @keyframes caer{
+    0%{transform:translate3d(0,-10vh,0) rotate(0deg)}
+    100%{transform:translate3d(var(--dx,20px),112vh,0) rotate(540deg)}
+  }
+  @media (prefers-reduced-motion:reduce){.petalo{display:none}}
+
+  /* ---------- layout ---------- */
+  .app{
+    position:relative;z-index:1;
+    max-width:480px;margin:0 auto;
+    padding:24px 18px calc(32px + env(safe-area-inset-bottom));
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .pantalla{display:none;animation:entrar .5s ease both}
+  .pantalla.activa{display:block}
+  @keyframes entrar{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .tarjeta{
+    background:var(--cream-2);
+    border:1px solid #F2E2B6;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:26px 20px;
+    text-align:center;
+  }
+
+  h1{
+    font-size:1.65rem;line-height:1.25;margin:0 0 14px;
+    font-weight:800;letter-spacing:-.02em;
+  }
+  h2{font-size:1.35rem;line-height:1.3;margin:0 0 12px;font-weight:800}
+  p{margin:0 0 16px;color:var(--ink-soft);font-size:1rem}
+  .sub{font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--leaf);font-weight:700;margin-bottom:10px}
+
+  /* ---------- flor decorativa ---------- */
+  .flor{width:104px;height:104px;margin:0 auto 18px;display:block;animation:mecer 5s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes mecer{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @media (prefers-reduced-motion:reduce){.flor{animation:none}}
+
+  /* ---------- botones ---------- */
+  .btn{
+    display:block;width:100%;
+    border:0;border-radius:999px;
+    padding:16px 22px;
+    font:inherit;font-size:1.05rem;font-weight:800;
+    color:#4A3A08;
+    background:linear-gradient(180deg,#FFDD55,var(--sun));
+    box-shadow:0 6px 0 #D8A70C, 0 12px 22px rgba(190,140,10,.22);
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #D8A70C, 0 6px 12px rgba(190,140,10,.2)}
+  .btn.verde{
+    color:#fff;
+    background:linear-gradient(180deg,#75B85C,var(--leaf));
+    box-shadow:0 6px 0 var(--leaf-dark), 0 12px 22px rgba(63,110,50,.22);
+  }
+  .btn.verde:active{box-shadow:0 2px 0 var(--leaf-dark), 0 6px 12px rgba(63,110,50,.2)}
+  .btn[disabled]{opacity:.45;pointer-events:none}
+  .btn-fantasma{
+    display:inline-block;margin-top:14px;background:none;border:0;
+    color:var(--ink-soft);font:inherit;font-size:.9rem;text-decoration:underline;cursor:pointer;
+  }
+
+  /* ---------- quiz ---------- */
+  .barra-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .barra{flex:1;height:8px;border-radius:999px;background:#F0E0B4;overflow:hidden}
+  .barra i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--sun),var(--leaf));transition:width .35s ease}
+  .contador{font-size:.8rem;font-weight:800;color:var(--ink-soft);white-space:nowrap}
+
+  .pregunta{
+    background:var(--cream-2);
+    border:1px solid #F2E2B6;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 16px 20px;
+  }
+  .pregunta h3{font-size:1.1rem;line-height:1.35;margin:0 0 14px;font-weight:800}
+
+  .foto{
+    position:relative;
+    width:100%;
+    /* el JS reemplaza esto por la proporcion real de cada imagen */
+    aspect-ratio:4/3;
+    max-height:56vh;
+    border-radius:16px;overflow:hidden;
+    background:linear-gradient(160deg,var(--sun-light),#FFF3C4);
+    border:1px solid #F0DFA8;
+    margin-bottom:6px;
+    transition:aspect-ratio .25s ease;
+  }
+  /* fondo desenfocado de la propia imagen: sirve para cualquier proporcion */
+  .foto::before{
+    content:"";position:absolute;inset:-14px;
+    background-image:var(--bg,none);
+    background-size:cover;background-position:center;
+    filter:blur(16px) saturate(1.3);
+    opacity:.6;
+  }
+  .foto img{
+    position:relative;z-index:1;
+    width:100%;height:100%;
+    object-fit:contain;display:block;
+  }
+  .foto .ph{
+    display:none;
+    position:absolute;inset:0;z-index:2;
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;padding:14px;text-align:center;
+  }
+  .foto.sin-foto img{display:none}
+  .foto.sin-foto .ph{display:flex}
+  .foto .ph span{font-size:2.6rem;line-height:1}
+  .foto .ph b{font-size:1rem;color:var(--ink)}
+  .foto .ph i{font-size:.78rem;color:var(--ink-soft);font-style:normal}
+  .epigrafe{font-size:.78rem;color:var(--ink-soft);margin:0 0 16px;font-style:italic}
+
+  .opciones{display:grid;gap:10px}
+  .op{
+    display:flex;align-items:center;gap:10px;
+    width:100%;text-align:left;
+    border:2px solid #EFDFB2;border-radius:14px;
+    background:#fff;padding:13px 14px;
+    font:inherit;font-size:.97rem;color:var(--ink);
+    cursor:pointer;transition:border-color .15s, background .15s, transform .1s;
+  }
+  .op:active{transform:scale(.99)}
+  .op .letra{
+    flex:0 0 26px;height:26px;border-radius:50%;
+    background:var(--sun-light);color:#6B5310;
+    display:grid;place-items:center;font-weight:800;font-size:.85rem;
+  }
+  .op.bien{border-color:var(--ok);background:#EEF8EE}
+  .op.bien .letra{background:var(--ok);color:#fff}
+  .op.mal{border-color:var(--bad);background:#FDEEEB}
+  .op.mal .letra{background:var(--bad);color:#fff}
+  .opciones.resuelta .op{pointer-events:none}
+  .opciones.resuelta .op:not(.bien):not(.mal){opacity:.5}
+
+  .feedback{
+    margin-top:14px;padding:12px 14px;border-radius:14px;
+    background:#FBF1D4;border:1px dashed #E4C871;
+    font-size:.92rem;color:var(--ink);
+    display:none;
+  }
+  .feedback.ver{display:block;animation:entrar .3s ease both}
+  .feedback b{display:block;margin-bottom:3px}
+  #btnSiguiente{margin-top:14px;display:none}
+  #btnSiguiente.ver{display:block}
+
+  /* ---------- resultado ---------- */
+  .puntaje{
+    font-size:3.4rem;font-weight:900;line-height:1;
+    color:var(--leaf-dark);margin:6px 0 2px;
+  }
+  .puntaje small{font-size:1.2rem;color:var(--ink-soft);font-weight:800}
+  .medalla{font-size:3.2rem;margin-bottom:4px}
+
+  /* ---------- final ---------- */
+  .final{text-align:center}
+  .gato{
+    width:100%;max-width:330px;margin:0 auto 16px;display:block;
+    border-radius:20px;
+    animation:aparecer .9s ease both, flotar 4.5s ease-in-out 1s infinite;
+  }
+  @keyframes aparecer{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:none}}
+  @keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @media (prefers-reduced-motion:reduce){.gato{animation:none}}
+  .final h2{font-size:1.5rem}
+  .final .firma{font-size:1.05rem;color:var(--leaf-dark);font-weight:800;margin-top:10px}
+  .ramo{font-size:1.9rem;letter-spacing:4px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="petalos" id="petalos" aria-hidden="true"></div>
+
+<main class="app">
+
+  <!-- ============ 1. INTRO ============ -->
+  <section class="pantalla activa" id="s1">
+    <div class="tarjeta">
+      <svg class="flor" viewBox="0 0 100 100" aria-hidden="true">
+        <g fill="#F7C51C">
+          <ellipse cx="50" cy="24" rx="11" ry="18"/>
+          <ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(60 50 44)"/>
+          <ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(120 50 44)"/>
+          <ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(180 50 44)"/>
+          <ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(240 50 44)"/>
+          <ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(300 50 44)"/>
+        </g>
+        <circle cx="50" cy="44" r="10" fill="#E9A000"/>
+        <path d="M50 54 C50 70 50 80 50 96" stroke="#5F9E4A" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M50 74 C62 70 70 74 72 80 C62 84 53 82 50 76 Z" fill="#5F9E4A"/>
+      </svg>
+      <div class="sub">21 de septiembre</div>
+      <h1>Antes de darte tus flores amarillas,<br>¿qué tal si jugamos?</h1>
+      <p>Prometo que es cortito. Y prometo que las flores existen.</p>
+      <button class="btn" data-ir="s2">Continuar</button>
+    </div>
+  </section>
+
+  <!-- ============ 2. DESAFIO ============ -->
+  <section class="pantalla" id="s2">
+    <div class="tarjeta">
+      <div style="font-size:3.2rem;margin-bottom:6px">📺✨</div>
+      <div class="sub">Modo chimento activado</div>
+      <h1>¿Qué tanto sabés de la farándula argentina?</h1>
+      <p>10 preguntas. Moria, Fort, Pachano y toda la banda. Sin Google, eh.</p>
+      <button class="btn verde" data-ir="s3">Acepto el desafío</button>
+      <button class="btn-fantasma" data-ir="s1">Volver</button>
+    </div>
+  </section>
+
+  <!-- ============ 3. QUIZ ============ -->
+  <section class="pantalla" id="s3">
+    <div class="barra-top">
+      <div class="barra"><i id="barra"></i></div>
+      <div class="contador" id="contador">1 / 10</div>
+    </div>
+
+    <div class="pregunta">
+      <h3 id="qTexto"></h3>
+
+      <div class="foto" id="qFoto">
+        <img id="qImg" src="" alt="">
+        <div class="ph">
+          <span id="phEmoji">🎭</span>
+          <b id="phNombre"></b>
+          <i>(poné la foto en /img para verla acá)</i>
+        </div>
+      </div>
+      <p class="epigrafe" id="qEpigrafe"></p>
+
+      <div class="opciones" id="qOpciones"></div>
+
+      <div class="feedback" id="qFeedback"></div>
+      <button class="btn verde" id="btnSiguiente">Siguiente</button>
+    </div>
+  </section>
+
+  <!-- ============ 4. RESULTADO ============ -->
+  <section class="pantalla" id="s4">
+    <div class="tarjeta">
+      <div class="medalla" id="rMedalla">🏆</div>
+      <div class="sub">Resultado final</div>
+      <div class="puntaje"><span id="rPuntos">0</span><small>/10</small></div>
+      <h2 id="rTitulo"></h2>
+      <p id="rTexto"></p>
+      <button class="btn" data-ir="s5">Ahora sí, mis flores 🌼</button>
+      <button class="btn-fantasma" id="btnReiniciar">Jugar de nuevo</button>
+    </div>
+  </section>
+
+  <!-- ============ 5. FLORES ============ -->
+  <section class="pantalla" id="s5">
+    <div class="tarjeta final">
+      <img class="gato" src="img/gato-flores.jpg" alt="Un gatito sosteniendo un ramo de flores amarillas junto a un corazón rojo">
+      <h2>¡Feliz primavera y día del estudiante!</h2>
+      <p class="firma">Ten tus flores amarillas 💛</p>
+      <div class="ramo" aria-hidden="true">🌼 🌻 🌼</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ================== PETALOS ================== */
+(function(){
+  var cont = document.getElementById('petalos');
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (var i = 0; i < 16; i++){
+    var p = document.createElement('span');
+    p.className = 'petalo';
+    var size = 9 + Math.random() * 12;
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.width = size + 'px';
+    p.style.height = (size * 0.85) + 'px';
+    p.style.opacity = (0.35 + Math.random() * 0.45).toFixed(2);
+    p.style.animationDuration = (9 + Math.random() * 11).toFixed(1) + 's';
+    p.style.animationDelay = (-Math.random() * 18).toFixed(1) + 's';
+    p.style.setProperty('--dx', (Math.random() * 140 - 70).toFixed(0) + 'px');
+    cont.appendChild(p);
+  }
+})();
+
+/* ================== PREGUNTAS ================== */
+var PREGUNTAS = [
+  {
+    q: '¿Cómo se autoproclama Moria Casán, la lengua más filosa de la televisión argentina?',
+    img: 'img/moria.gif',
+    nombre: 'Moria Casán',
+    emoji: '💅',
+    epigrafe: 'Moria Casán — "me chupa un huevo" es patrimonio cultural.',
+    opts: ['La One', 'La Única', 'La Reina Madre', 'La Diva de los Teléfonos'],
+    ok: 0,
+    tip: 'La One, señores. Todo lo demás es, apenas, la two.'
+  },
+  {
+    q: 'Ricardo Fort, "El Comandante", era heredero de un imperio de...',
+    img: 'img/fort',
+    nombre: 'Ricardo Fort',
+    emoji: '🍫',
+    epigrafe: 'Ricardo Fort — "me duele la cara de ser tan bello".',
+    opts: ['Chocolates Felfort', 'Alfajores Jorgito', 'Golosinas Arcor', 'Helados Freddo'],
+    ok: 0,
+    tip: 'Felfort. Bañado en chocolate y en escándalo.'
+  },
+  {
+    q: 'Aníbal Pachano se volvió leyenda como jurado de un certamen de ShowMatch. ¿Cuál?',
+    img: 'img/pachano.gif',
+    nombre: 'Aníbal Pachano',
+    emoji: '🎩',
+    epigrafe: 'Pachano — sombrero, bastón y cero filtro.',
+    opts: ['El Bailando por un Sueño', 'Gran Hermano', 'Los 8 Escalones', 'El Gran Premio de la Cocina'],
+    ok: 0,
+    tip: 'El Bailando. Y su compañía se llama Freedom, dato para nerds del chimento.'
+  },
+  {
+    q: '¿Cuál es la frase marca registrada de Mirtha Legrand?',
+    img: 'img/mirtha.jpg',
+    nombre: 'Mirtha Legrand',
+    emoji: '💎',
+    epigrafe: 'La Chiqui — ambigüedad nivel dios.',
+    opts: ['"Como te digo una cosa, te digo la otra"', '"¿Me estás escuchando?"', '"Esto es un escándalo"', '"Nadie me dijo nada"'],
+    ok: 0,
+    tip: 'La frase que sirve para opinar sin opinar. Maestra.'
+  },
+  {
+    q: 'Antes de ser "La Su", Susana Giménez explotó en los 70 con una publicidad junto a Carlos Monzón. ¿De qué producto?',
+    img: 'img/susana.jpg',
+    nombre: 'Susana Giménez',
+    emoji: '📞',
+    epigrafe: 'Susana — la chica del jabón que terminó siendo la diva de los teléfonos.',
+    opts: ['El jabón Cadum', 'La gaseosa Crush', 'El shampoo Plusbelle', 'Los caramelos Sugus'],
+    ok: 0,
+    tip: 'Jabón Cadum, 1970. De ahí a "Hola Susana" fue un rato.'
+  },
+  {
+    q: 'El "Wandagate" estalló con un posteo de Wanda Nara que se volvió meme instantáneo. ¿Qué decía?',
+    img: 'img/wanda.jpg',
+    nombre: 'Wanda Nara',
+    emoji: '💣',
+    epigrafe: 'Wanda Nara — cinco palabras y Twitter se prendió fuego.',
+    opts: ['"Te quedó grande la familia, zorra"', '"Ubicate, nena"', '"Se te ve el plumero"', '"Gracias por nada"'],
+    ok: 0,
+    tip: 'Octubre 2021: el tuit que paró al país entero.'
+  },
+  {
+    q: '¿Cómo se llamaba el ciclo con el que Marcelo Tinelli fundó su imperio, antes de ShowMatch?',
+    img: 'img/tinelli.jpg',
+    nombre: 'Marcelo Tinelli',
+    emoji: '🎬',
+    epigrafe: 'Tinelli — el hombre que inventó las noches de los martes.',
+    opts: ['VideoMatch', 'Sábado Bus', 'Fútbol de Primera', 'La Noche del Domingo'],
+    ok: 0,
+    tip: 'VideoMatch primero, ShowMatch después. Mismo circo, más luces.'
+  },
+  {
+    q: 'Charlotte Caniggia, reina absoluta del meme argentino, es hija de...',
+    img: 'img/charlotte.gif',
+    nombre: 'Charlotte Caniggia',
+    emoji: '👑',
+    epigrafe: 'Charlotte — "yo no sé usar el cajero, ¿para qué?".',
+    opts: ['Claudio Paul Caniggia y Mariana Nannis', 'Diego Maradona y Claudia Villafañe', 'Guillermo Coppola y Yanina Latorre', 'Ricardo Fort y Virginia Gallardo'],
+    ok: 0,
+    tip: 'Sangre azul del conurbano internacional.'
+  },
+  {
+    q: 'Diego, en su despedida en la Bombonera, dejó una frase que quedó tatuada en la historia:',
+    img: 'img/maradona.jpg',
+    nombre: 'Diego Maradona',
+    emoji: '⚽',
+    epigrafe: 'Diego — el meme antes de que existieran los memes.',
+    opts: ['"La pelota no se mancha"', '"Me cortaron las piernas"', '"Se le escapó la tortuga"', '"La tuvo adentro"'],
+    ok: 0,
+    tip: '"La pelota no se mancha." Punto. "Me cortaron las piernas" fue en el Mundial 94.'
+  },
+  {
+    q: 'Jorge Rial condujo casi 20 años el programa de chimentos más temido de la tarde. ¿Cuál?',
+    img: 'img/rial.jpg',
+    nombre: 'Jorge Rial',
+    emoji: '🎤',
+    epigrafe: 'Rial — cara de piedra, carpeta en mano.',
+    opts: ['Intrusos en el Espectáculo', 'LAM', 'Bendita TV', 'Los Profesionales de Siempre'],
+    ok: 0,
+    tip: 'Intrusos. La carnicería más elegante de la televisión.'
+  }
+];
+
+/* ================== RESULTADOS ================== */
+var NIVELES = [
+  { min: 10, medalla: '👑', titulo: '¡Sos LA ONE!',
+    texto: 'Diez de diez. Moria te haría un lugar en el living. Esto ya no es mirar televisión, esto es doctorado en chimentos.' },
+  { min: 8,  medalla: '🏆', titulo: '¡Nivel Intrusos!',
+    texto: 'Casi perfecto. Podrías sentarte en el panel y opinar con autoridad. Rial te contrata mañana.' },
+  { min: 6,  medalla: '🌟', titulo: '¡Zafaste y con estilo!',
+    texto: 'Sabés lo tuyo. Te faltan un par de tardes de sillón y zapping, pero vas bien.' },
+  { min: 4,  medalla: '📺', titulo: 'Mirá un poquito más de tele',
+    texto: 'Te salvan los clásicos, pero se te escapó la tortuga en varias. Un par de domingos con Mirtha y lo arreglamos.' },
+  { min: 0,  medalla: '🛋️', titulo: 'Tenés que mirar MUCHA más televisión',
+    texto: 'Loca, estuviste viviendo afuera del país o directamente sin cable. Pero tranqui: las flores te las ganás igual. 💛' }
+];
+
+/* ================== LOGICA ================== */
+var idx = 0, puntos = 0;
+
+var el = {
+  qTexto: document.getElementById('qTexto'),
+  qImg: document.getElementById('qImg'),
+  qFoto: document.getElementById('qFoto'),
+  phEmoji: document.getElementById('phEmoji'),
+  phNombre: document.getElementById('phNombre'),
+  qEpigrafe: document.getElementById('qEpigrafe'),
+  qOpciones: document.getElementById('qOpciones'),
+  qFeedback: document.getElementById('qFeedback'),
+  btnSig: document.getElementById('btnSiguiente'),
+  barra: document.getElementById('barra'),
+  contador: document.getElementById('contador')
+};
+
+function irA(id){
+  var todas = document.querySelectorAll('.pantalla');
+  for (var i = 0; i < todas.length; i++) todas[i].classList.remove('activa');
+  document.getElementById(id).classList.add('activa');
+  window.scrollTo(0, 0);
+}
+
+function mezclar(arr){
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* Prueba las extensiones una por una: alcanza con tirar el archivo
+   en /img con el nombre correcto, sin importar el formato. */
+var EXTENSIONES = ['.gif', '.jpg', '.jpeg', '.png', '.webp', '.avif'];
+var generacion = 0;
+
+function cargarFoto(base){
+  var miGen = ++generacion;
+  var i = 0;
+
+  /* Si el nombre ya trae extension, esa va primero (carga directa, sin 404).
+     Igual dejamos el sondeo como respaldo: si maniana cambias el formato
+     del archivo, la pagina lo encuentra sola. */
+  var sinExt = base.replace(/\.[a-z0-9]+$/i, '');
+  var candidatos = (sinExt !== base) ? [base] : [];
+  EXTENSIONES.forEach(function(ext){
+    var u = sinExt + ext;
+    if (candidatos.indexOf(u) === -1) candidatos.push(u);
+  });
+
+  el.qFoto.classList.remove('sin-foto');
+  el.qFoto.style.setProperty('--bg', 'none');
+
+  function probar(){
+    if (miGen !== generacion) return;          /* cambio de pregunta: cortamos */
+    if (i >= candidatos.length){
+      el.qFoto.classList.add('sin-foto');
+      el.qFoto.style.aspectRatio = '4 / 3';
+      el.qImg.removeAttribute('src');
+      return;
+    }
+    var url = candidatos[i++];
+    el.qImg.onerror = probar;
+    el.qImg.onload = function(){
+      if (miGen !== generacion) return;
+      el.qFoto.classList.remove('sin-foto');
+      el.qFoto.style.setProperty('--bg', 'url("' + url + '")');
+      /* el recuadro toma la proporcion de la imagen: nada se recorta
+         ni queda letterboxeado, venga horizontal, cuadrada o vertical */
+      if (el.qImg.naturalWidth && el.qImg.naturalHeight){
+        el.qFoto.style.aspectRatio = el.qImg.naturalWidth + ' / ' + el.qImg.naturalHeight;
+      }
+    };
+    el.qImg.src = url;
+  }
+
+  probar();
+}
+
+function pintarPregunta(){
+  var p = PREGUNTAS[idx];
+  var letras = ['A', 'B', 'C', 'D'];
+
+  el.qTexto.textContent = p.q;
+  el.qEpigrafe.textContent = p.epigrafe;
+  el.phEmoji.textContent = p.emoji;
+  el.phNombre.textContent = p.nombre;
+
+  el.qImg.alt = p.nombre;
+  cargarFoto(p.img);
+
+  el.contador.textContent = (idx + 1) + ' / ' + PREGUNTAS.length;
+  el.barra.style.width = (idx / PREGUNTAS.length * 100) + '%';
+
+  /* mezclamos las opciones para que la correcta no sea siempre la A */
+  var pares = p.opts.map(function(texto, i){ return { texto: texto, ok: i === p.ok }; });
+  pares = mezclar(pares);
+
+  el.qOpciones.innerHTML = '';
+  el.qOpciones.className = 'opciones';
+  pares.forEach(function(par, i){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'op';
+    b.innerHTML = '<span class="letra">' + letras[i] + '</span><span></span>';
+    b.lastChild.textContent = par.texto;
+    b.addEventListener('click', function(){ responder(b, par.ok); });
+    el.qOpciones.appendChild(b);
+  });
+
+  el.qFeedback.className = 'feedback';
+  el.qFeedback.innerHTML = '';
+  el.btnSig.className = 'btn verde';
+  el.btnSig.textContent = (idx === PREGUNTAS.length - 1) ? 'Ver mi resultado' : 'Siguiente';
+}
+
+function responder(boton, acerto){
+  var p = PREGUNTAS[idx];
+  el.qOpciones.classList.add('resuelta');
+
+  if (acerto){
+    puntos++;
+    boton.classList.add('bien');
+  } else {
+    boton.classList.add('mal');
+    /* marcamos la correcta */
+    var ops = el.qOpciones.querySelectorAll('.op');
+    for (var i = 0; i < ops.length; i++){
+      if (ops[i].lastChild.textContent === p.opts[p.ok]) ops[i].classList.add('bien');
+    }
+  }
+
+  el.qFeedback.innerHTML = '<b>' + (acerto ? '¡Correcta! 🌼' : 'Uhh, no 😅') + '</b>';
+  el.qFeedback.appendChild(document.createTextNode(p.tip));
+  el.qFeedback.classList.add('ver');
+  el.btnSig.classList.add('ver');
+  el.btnSig.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function siguiente(){
+  idx++;
+  if (idx >= PREGUNTAS.length){
+    mostrarResultado();
+  } else {
+    pintarPregunta();
+  }
+}
+
+function mostrarResultado(){
+  el.barra.style.width = '100%';
+  var nivel = NIVELES.find(function(n){ return puntos >= n.min; });
+  document.getElementById('rPuntos').textContent = puntos;
+  document.getElementById('rMedalla').textContent = nivel.medalla;
+  document.getElementById('rTitulo').textContent = nivel.titulo;
+  document.getElementById('rTexto').textContent = nivel.texto;
+  irA('s4');
+}
+
+function empezar(){
+  idx = 0;
+  puntos = 0;
+  pintarPregunta();
+}
+
+/* ---- eventos ---- */
+document.querySelectorAll('[data-ir]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var destino = b.getAttribute('data-ir');
+    if (destino === 's3') empezar();
+    irA(destino);
+  });
+});
+
+el.btnSig.addEventListener('click', siguiente);
+
+document.getElementById('btnReiniciar').addEventListener('click', function(){
+  empezar();
+  irA('s3');
+});
+</script>
+</body>
+</html>
